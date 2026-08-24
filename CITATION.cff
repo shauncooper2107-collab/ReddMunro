@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you reference this work, please cite it as below."
+title: "Redd Munro: a redundancy and unique-variance auditor for telemetry"
+abstract: >-
+  Reads a wide CSV of metrics over time and reports how much independent
+  information it carries, which columns restate one another, and which
+  are candidates to archive — with the evidence for each and the reasons
+  not to. Development is pre-registered: predictions are committed before
+  each dataset is pulled and scored afterwards, misses included.
+type: software
+authors:
+  - family-names: Cooper
+    given-names: Shaun
+version: 0.1.2
+license: Apache-2.0
+repository-code: "https://github.com/bigangusmac67-oss/ReddMunro"
+url: "https://reddmunro.com"
+keywords:
+  - observability
+  - telemetry
+  - redundancy
+  - site-reliability-engineering
+  - pre-registration

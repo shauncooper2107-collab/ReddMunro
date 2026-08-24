@@ -169,11 +169,25 @@ still holds with the tip in place, that is a stronger result than it
 would have been without — the easy fix was applied first and did not
 move it.
 
-**Nothing was added to `OUTREACH.md`.** The cold note carries no export
-tutorial and no link to this section. A recipient who goes looking for
-documentation will find it, and that is normal; putting it in the note
-would make the export step salient in the same message that asks where
-they stopped.
+**Superseded in part on 2026-08-15, still before any contact.** The note
+now carries a one-line pointer to that README section and the Grafana
+click-path. Read cold by someone with no context, the previous version
+specified the input format — "columns are metrics, rows are timestamps"
+— without saying how to produce it, which is a specification rather than
+an instruction.
+
+The distinction that matters: **naming a prediction is contamination;
+supplying a how-to is onboarding.** The note still names no prediction,
+no suspected friction point and no hoped-for finding. What changed is
+that the registered onboarding is now reachable from the message rather
+than only from someone thinking to go looking, so a team that gives up
+does so having had the same information as a team that does not.
+
+The consequence for A1 is stated rather than avoided: **the prediction is
+now being tested against an onboarding where the export step is
+signposted.** That makes A1 harder to hit, not easier. If teams still
+stop at the export with the click-path in front of them, the result is
+stronger than it would have been.
 
 ---
 
