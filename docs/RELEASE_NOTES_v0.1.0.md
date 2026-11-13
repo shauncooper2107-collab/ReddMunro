@@ -39,7 +39,7 @@ That is the whole product: the arithmetic is the easy half.
 
 ## What is verified
 
-- **284 engine checks + 108 backend checks**, every fixture generated
+- **At this 0.1.0 release, 284 engine checks + 108 backend checks**, every fixture generated. The current suite size is [`docs/TESTING.md`](TESTING.md) — this note is the count at the release, not the count now.
   from a planted answer so the tool can be caught being wrong
 - **Runs under real wasm32 in CI** — CPython computes the result,
   Pyodide reproduces it field for field. Added after an `int64` index

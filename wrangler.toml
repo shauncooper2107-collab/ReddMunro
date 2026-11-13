@@ -40,8 +40,15 @@ not_found_handling = "404-page"
 #                        render the landing page and look fine while
 #                        search engines index infinite duplicates.
 #
-# demo/_headers is picked up natively by Workers static assets, same
-# as it was by Pages. The Content-Type line on signal_audit.py is the
-# load-bearing one: served as anything executable-looking, a
-# root-level .py can be treated as a function rather than a static
-# file, and the page cannot load its own engine.
+# demo/_headers is picked up by Workers static assets only when Wrangler
+# parses it into the asset-config metadata (Wrangler 4). It is then NOT
+# served as a file. The live site on 13 Nov 2026 was serving /_headers
+# as application/octet-stream and sending none of the rules, which is
+# what a dashboard upload or an older Wrangler does. Redeploy with
+# `npx wrangler@4 deploy`. See docs/DEPLOY.md.
+# The Content-Type line on signal_audit.py is load-bearing: served as
+# anything executable-looking, a root-level .py can be treated as a
+# function rather than a static file, and the page cannot load its
+# own engine. The Content-Security-Policy is the other load-bearing
+# line: connect-src is this origin plus the Pyodide CDNs, so the
+# "nothing leaves this tab" claim is enforced by the browser.

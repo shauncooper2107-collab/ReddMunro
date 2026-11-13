@@ -11,10 +11,36 @@ person who left. The count goes up and the number of things you can
 actually *see* does not, and there is no moment at which anyone is told
 the difference. This measures the difference.
 
+## Ten teams
+
+Looking for ten teams to run this on a board they would be paged for and
+email what came back, including nothing. About ten minutes once a
+Prometheus export is in hand.
+
+[Email what came back](mailto:shaun@reddmunro.com?subject=Redd%20Munro%20%E2%80%94%20ten%20teams&body=Board%20size%20%28metrics%20x%20rows%29%3A%0A%0AWhat%20it%20flagged%20%28including%20nothing%29%3A%0A%0AWas%20it%20useful%3F%0A)
+
+The local CLI and the page at [reddmunro.com](https://reddmunro.com) stay
+free under Apache-2.0. `backend/` is an undeployed prototype — Starter,
+Pro and Unlimited tiers on paper — and it takes no money. See
+[`backend/README.md`](backend/README.md).
+
 ## A measured result, before anything else
 
-On the Prometheus corpus that ships with this repository. Eleven metrics
-is a small board, chosen because it is small enough to check by hand:
+On NYC's public COVID-19 daily counts. Fifty-three metrics over 455 days,
+a board that informed policy:
+
+| The board | The audit |
+|---|---|
+| **53** panels | **5.1** independent signals |
+| **455** days | raw view **1.6** — every series rode the same wave |
+
+```bash
+redd run data/nyc_covid_dashboard.csv --basis differenced --ordered
+```
+
+Beside it, the Prometheus corpus that ships with this repository. Eleven
+metrics is a small board, chosen because it is small enough to check by
+hand:
 
 | The board | The audit |
 |---|---|
@@ -26,18 +52,23 @@ is a small board, chosen because it is small enough to check by hand:
 
 ```bash
 # the audit figures
-redd run   prometheus_infra.csv --basis differenced --ordered
+redd run   data/prometheus_infra.csv --basis differenced --ordered
 
 # the archive candidates, and the conflicts against your alert rules
 redd prune prometheus_infra.csv --basis differenced --ordered \
      --refs ./monitoring --worksheet ws.csv
 ```
 
-Every figure above is produced by those two commands and by nothing else; there
+Every figure above is produced by those commands and by nothing else; there
 are no illustrative numbers in this README. The ratio is what travels:
 **half of a production Prometheus instance was restating the other half**,
 on a set small enough that its owners could reasonably believe they knew
-it.
+it. The NYC board is the same kind of result on a board that is not small.
+
+A principal-component count would stop at "about five signals." It would
+not name the columns that are the same measurement twice, the pair that
+is dependent even though correlation is near zero, or the archive
+candidate that still sits behind a paging alert.
 
 ## Why that matters — and where the argument stops
 
@@ -50,10 +81,10 @@ it.
 
 The third link is the one everyone in this industry asserts and nobody has
 tested, including us. It is prediction **H1** in
-[`HISTORY_STORE_PREREG.md`](HISTORY_STORE_PREREG.md), deliberately left
+[`HISTORY_STORE_PREREG.md`](https://github.com/bigangusmac67-oss/ReddMunro/blob/main/docs/HISTORY_STORE_PREREG.md), deliberately left
 unscored, because settling it needs a window somebody labelled `incident`
 because their service was genuinely broken. It is the main thing we are
-[looking for teams to help settle](RELEASE_NOTES_v0.1.0.md).
+[looking for teams to help settle](https://github.com/bigangusmac67-oss/ReddMunro/blob/main/docs/RELEASE_NOTES_v0.1.0.md).
 
 ## Install
 
@@ -72,7 +103,9 @@ redd history                           # what previous runs found
 ### → Or run it on your own export in the browser: **[reddmunro.com](https://reddmunro.com)**
 
 No install, no account, no upload — the engine runs in your tab via
-WebAssembly. Open the network panel and check.
+WebAssembly. The first visit downloads the Python runtime and numpy
+(about 10 MB) from jsDelivr. That is what the network panel shows. The
+file you drop is not part of that download and is not sent anywhere.
 
 ## Getting the CSV
 
@@ -271,7 +304,7 @@ information. And 30 overlapping runs are not 30 observations — the report
 says 5.14 rather than letting you read the larger number.
 
 Record a run per week from separate exports. Do not slice one export into
-windows: scoring `HISTORY_STORE_PREREG.md` found that a corpus supporting
+windows: scoring `docs/HISTORY_STORE_PREREG.md` found that a corpus supporting
 one grade-A audit supports only **three** gradeable windows.
 
 ---
@@ -309,7 +342,7 @@ Both of these come from a research programme that spent most of its effort tryin
 
 ## Validation
 
-`python test_signal_audit.py` — 284 checks, all against **known** ground truth. Every fixture is generated from a planted number of latent factors, so the tool's answer can be checked rather than admired:
+`python test_signal_audit.py` — the checks listed in [`docs/TESTING.md`](docs/TESTING.md), all against **known** ground truth. Every fixture is generated from a planted number of latent factors, so the tool's answer can be checked rather than admired:
 
 | Check | Expected | Result |
 |---|---|---|
@@ -341,13 +374,13 @@ Caveat, and the tool says so itself: 8.6 rows per metric is below its comfort th
 
 ### On a second real dashboard, with predictions written first
 
-`act_air_quality.csv` — ACT (Canberra) air quality monitoring, 12 metrics × 1,094 hourly readings. Source: [ACT Open Data](https://www.data.act.gov.au/Environment/Air-Quality-Monitoring-Data/94a5-zqnn). Ten predictions were recorded in `REAL_DASHBOARDS.md` **before** the data was fetched or run, because a redundancy auditor applied only to data of unknown structure can never be wrong and therefore never tested.
+`act_air_quality.csv` — ACT (Canberra) air quality monitoring, 12 metrics × 1,094 hourly readings. Source: [ACT Open Data](https://www.data.act.gov.au/Environment/Air-Quality-Monitoring-Data/94a5-zqnn). Ten predictions were recorded in `docs/REAL_DASHBOARDS.md` **before** the data was fetched or run, because a redundancy auditor applied only to data of unknown structure can never be wrong and therefore never tested.
 
 **12 metrics, 4.7 independent signals. Score: 6 hits, 4 misses — 2 bad predictions, 2 real tool defects.**
 
 Hits included the ozone/NO2 titration relationship (correct negative sign, plus nonlinearity), and all four AQI columns pairing exactly with their own source pollutant. The misses were more useful: one exposed that a max-of-others index was being ranked the *most* load-bearing metric on the board when it is fully derived — now fixed with a `derived_aggregates` detector that took four attempts, each rejected by evidence. The other exposed that differencing destroys the relationship between a series and its own rolling average, which is documented rather than fixed.
 
-Full scoring, including the three rejected detector designs, is in `REAL_DASHBOARDS.md`.
+Full scoring, including the three rejected detector designs, is in `docs/REAL_DASHBOARDS.md`.
 
 ---
 
@@ -379,13 +412,13 @@ page has usually lost the measurement that makes it worth reading.
 - **Cross-sections have their own confound. A cure now ships, but you must declare it.** `--scale-by COL` adds a ratio basis dividing every column by COL; repeatable, because platform telemetry has no single denominator the way a balance sheet has total assets. **`--scale-exempt COL` is not optional politeness** — dividing an already scale-free column by a size *injects* the confound the basis exists to remove. Measured on bank data: `ROA`~`ROE` went from +0.60 to +0.98, past the clustering threshold, making two different profitability measures look redundant. The `basis-conflict` check reports any pair a transform inflated, but cannot tell you whether a factor was injected (a defect) or a real duplicate exposed (a finding) — only someone who knows what the metrics mean can. Original limitation, for context: In a time series a calendar trend makes everything correlate, and differencing removes it. In a cross-section of entities the same role is played by **scale**: every dollar-denominated column tracks institution size, so everything correlates with everything. On the FDIC corpus that produced **2.5 effective signals from 39 metrics (93.5% redundant)**; dividing every field by total assets lifted it to **14.8 (61.1%)**. The general rule is *remove the dominant scaling variable, whichever it is* — differencing for time, ratio-normalisation for a cross-section. Only the first is implemented. Normalise before you run, or the headline will be about size rather than about your metrics. Two further detectors degrade under this confound: the derived-aggregate check flagged 28 of 39 metrics (3 after normalising), and single-linkage clustering chained 24 of 39 into one unusable group.
 - **The identity check cannot distinguish a definition from a near-proportionality.** At `IDENTITY_R = 0.999` it reported bank `ASSET` and `LIAB` as "the same quantity under two names" — they differ by equity, which is the entire subject of capital regulation. Where one variable dominates the spread, the threshold stops meaning *definitionally identical* and starts meaning *both large*.
 - **Listwise deletion.** Rows with any missing metric are dropped, and the count is reported. If your columns have different coverage this can discard a lot; the note in the output tells you how much.
-- **Correlation and MI are pairwise.** Three-way structure — information carried jointly by a triple and by no pair within it — is not measured here. This was tested rather than assumed (`triadic_validation.py`): across four corpora, three-way analysis found **nothing** that pairwise analysis had not already found, resolution scales only as the cube root of history, and cost grows as C(N,3). Deferred deliberately, with the conditions for revisiting recorded in `REAL_DASHBOARDS.md` §5.
+- **Correlation and MI are pairwise.** Three-way structure — information carried jointly by a triple and by no pair within it — is not measured here. This was tested rather than assumed (`triadic_validation.py`): across four corpora, three-way analysis found **nothing** that pairwise analysis had not already found, resolution scales only as the cube root of history, and cost grows as C(N,3). Deferred deliberately, with the conditions for revisiting recorded in `docs/REAL_DASHBOARDS.md` §5.
 - **Rows per metric matters.** Below about 10 rows per metric the per-metric regression is strained even with the adjustment applied, and the tool warns you. Wide dashboards need long histories: 50 metrics wants 500+ rows.
 - **Differencing hides a series against its own smoothing — but only when the averaging window exceeds the sampling interval.** Confirmed on real Prometheus data: `load1/5/15` sampled every 300s showed differencing *strengthening* their correlations (0.761→0.765, 0.859→0.916), because a 60s average sampled every 300s is not smoothed relative to the sample rate. The blind spot is real where ozone 1h vs 8h showed it, and absent where the sampling is slower than the smoothing. A raw metric and its own rolling average correlate strongly in levels and weakly in differences, because the smoothed series has little period-to-period variation left. On a real dashboard `o3_1hr` vs `o3_8hr` ran 0.749 raw and 0.258 differenced. Both columns are always printed, but the headline will understate redundancy on any board mixing raw and smoothed versions of the same metric.
 - **Subset sums are detected, but only exact ones over non-negative columns.** `subset_sums` finds a column that is the exact sum of a named subset of the others — it closed the gap this list previously described. What it still will not do: **signed columns are excluded entirely**, because dominance is meaningless when a child can be negative (on an income statement that excludes most of the sheet); **approximate sums are rejected on purpose**, so a relation holding on 96% of rows is not reported; and a sum whose components are not all present as columns cannot close. It is also skipped above 250 columns, where the O(N²·rows) dominance pass stops being cheap. Missing a real sum is treated as far cheaper than inventing one.
 - **Nonlinear detection needs about 200 rows.** Below that the estimator is unreliable and the tool says so rather than guessing.
 - **Not causal.** Everything here is association. Two metrics in a cluster may share a driver, or one may cause the other, or both may be measuring an instrument rather than the world.
-- **A metric held flat by a working control loop loses its unique variance, and will be offered for archiving.** This is the sharpest limitation on the list, because the arithmetic is right and the advice is still dangerous. A channel that a controller is actively pinning — request latency under an autoscaler, queue depth under a drain loop, heap usage under GC — becomes a near-deterministic function of the load and the effort absorbing it. Deterministic means no residual variance of its own, and `deletion_candidates` archives anything at or below `max_unique = 0.02`. Measured on a simulated proportional controller (gain 0.92, 600 rows, six columns): as the loop tightens, the held channel's unique variance falls **0.90 → 0.41 → 0.067 → 0.0007 → 0.0000**, and it is offered as an ARCHIVE candidate from 0.0007 down. Nothing in the file says the flatness is *maintained* rather than *natural*, and the engine cannot tell the two apart from values alone. **The channel a controller works hardest to hold still is the one that moves first when it stops working** — so this limitation selects for archiving exactly the metric worth keeping. It is not detected, not guessed at, and there is no flag for it; the reference scan and the worksheet are the only defences, which is one more reason the tool ends at an attestation rather than a delete button. A pre-registration for a detector is in `CONTROLLED_FLAT_PREREG.md`, unscored.
+- **A metric held flat by a working control loop loses its unique variance, and will be offered for archiving.** This is the sharpest limitation on the list, because the arithmetic is right and the advice is still dangerous. A channel that a controller is actively pinning — request latency under an autoscaler, queue depth under a drain loop, heap usage under GC — becomes a near-deterministic function of the load and the effort absorbing it. Deterministic means no residual variance of its own, and `deletion_candidates` archives anything at or below `max_unique = 0.02`. Measured on a simulated proportional controller (gain 0.92, 600 rows, six columns): as the loop tightens, the held channel's unique variance falls **0.90 → 0.41 → 0.067 → 0.0007 → 0.0000**, and it is offered as an ARCHIVE candidate from 0.0007 down. Nothing in the file says the flatness is *maintained* rather than *natural*, and the engine cannot tell the two apart from values alone. **The channel a controller works hardest to hold still is the one that moves first when it stops working** — so this limitation selects for archiving exactly the metric worth keeping. It is not detected, not guessed at, and there is no flag for it; the reference scan and the worksheet are the only defences, which is one more reason the tool ends at an attestation rather than a delete button. A pre-registration for a detector is in `docs/CONTROLLED_FLAT_PREREG.md`, unscored.
 
 ---
 
@@ -395,7 +428,7 @@ page has usually lost the measurement that makes it worth reading.
 |---|---|
 | `signal_audit.py` | The tool. Single file, numpy only. |
 | `signal_audit_cli.py` | The `redd` command. Presentation only, no analysis. |
-| `test_signal_audit.py` | 284 validation checks against planted ground truth. |
+| `test_signal_audit.py` | Validation checks against planted ground truth. The count is [`docs/TESTING.md`](docs/TESTING.md). |
 | `make_demo.py` | Generates the demo dashboard with known structure. |
 | `check_pyodide.py` | Browser-compatibility preconditions (12 checks). |
 | `history.py` | Multi-window history. Reports the EXCEPTION first — the run where a 'redundant' pair came apart. |
@@ -405,22 +438,22 @@ page has usually lost the measurement that makes it worth reading.
 | `refgraph.py` | Reference graph — where a metric is used, from rule files and dashboards. Evidence for the worksheet, never clearance. |
 | `examples/` | Mock Prometheus rules and a Grafana dashboard, so `--refs` can be run end to end. See `examples/README.md`. |
 | `pyproject.toml` | Packaging. numpy-only runtime by design. |
-| **Evidence** | |
-| `REAL_DASHBOARDS.md` | Predictions, scoring, and what each run changed in the tool. |
-| `SCALE_BASIS_PREREG.md` | Cross-sectional scale confound — 9 predictions, 9 hits. |
-| `MI_SCALING_PREREG.md` | The MI performance repair — 7 hits, 1 failure, change abandoned. |
-| `AI_EVAL_PREREG.md` | AI leaderboards — 5 hits, 2 failures, both instructive. |
-| `DRIFT_PREREG.md` | Correlation drift — 9 predictions, 9 hit, three bugs found in the wiring. |
-| `CONTINUOUS_DIFF_SPEC.md` | Continuous auditing — 10 predictions, **unscored**, registered before any code. |
-| `BINNING_PREREG.md` | Tied-data binning — 6 hit, 2 missed. The misses disproved the previous cycle's diagnosis and found a real under-detection on counter columns. |
-| `HISTORY_STORE_PREREG.md` | Multi-window history — **6 hit, 1 missed**. The miss found a real constraint: persistence needs ~10× the history a single audit does. H1 still unscored. |
-| `SAFETY_BOUNDARIES.md` | What the tool refuses to generate, what would move that line, and an amendment log recording when it moved. |
-| `OTEL_INTEGRATION_SPEC.md` | Collector-side cardinality and routing. Specified, **not built**; gated on Amendment 1. |
+| **Evidence** (in `docs/`) | |
+| `docs/REAL_DASHBOARDS.md` | Predictions, scoring, and what each run changed in the tool. |
+| `docs/SCALE_BASIS_PREREG.md` | Cross-sectional scale confound — 9 predictions, 9 hits. |
+| `docs/MI_SCALING_PREREG.md` | The MI performance repair — 7 hits, 1 failure, change abandoned. |
+| `docs/AI_EVAL_PREREG.md` | AI leaderboards — 5 hits, 2 failures, both instructive. |
+| `docs/DRIFT_PREREG.md` | Correlation drift — 9 predictions, 9 hit, three bugs found in the wiring. |
+| `docs/CONTINUOUS_DIFF_SPEC.md` | Continuous auditing — 10 predictions, **unscored**, registered before any code. |
+| `docs/BINNING_PREREG.md` | Tied-data binning — 6 hit, 2 missed. The misses disproved the previous cycle's diagnosis and found a real under-detection on counter columns. |
+| `docs/HISTORY_STORE_PREREG.md` | Multi-window history — **6 hit, 1 missed**. The miss found a real constraint: persistence needs ~10× the history a single audit does. H1 still unscored. |
+| `docs/SAFETY_BOUNDARIES.md` | What the tool refuses to generate, what would move that line, and an amendment log recording when it moved. |
+| `docs/OTEL_INTEGRATION_SPEC.md` | Collector-side cardinality and routing. Specified, **not built**; gated on Amendment 1. |
 | `data/` | Every corpus the documents above were scored against. |
 | `reports/` | The generated audits those documents refer to. |
 | **Surfaces** | |
 | `demo/` | Zero-server browser demo (Pyodide) — this is [reddmunro.com](https://reddmunro.com). |
-| `backend/` | Hosted service: contract, metering, jobs, exports, OpenAPI. |
+| `backend/` | Undeployed API prototype. Not deployed, takes no money. The CLI and the browser tool stay free under Apache-2.0. See `backend/README.md`. |
 | `ci/` | Runs the engine under real wasm32, because the browser is the product. |
 
 The corpora in `data/` are committed deliberately. Every scored prediction is
@@ -430,7 +463,7 @@ only checkable if the data it was scored against is here.
 
 `check_pyodide.py` verifies the preconditions for Pyodide/WebAssembly: stdlib-and-numpy imports only, nothing browser-hostile (no multiprocessing, threading, sockets or ctypes), and a filesystem-free route via `audit_text()` that produces bit-identical results to the file route.
 
-`demo/index.html` is the browser demo built on that: drop a CSV, the engine runs locally via WebAssembly, nothing is transmitted. The JSON contract it renders (`report_payload`) is asserted in the engine suite, section 9, so removing a field breaks a test rather than the page.
+`demo/index.html` is the browser demo built on that: drop a CSV, the engine runs locally via WebAssembly. The first visit downloads Pyodide and numpy from jsDelivr; the CSV is not transmitted. The JSON contract it renders (`report_payload`) is asserted in the engine suite, section 9, so removing a field breaks a test rather than the page.
 
 Browser execution was **verified on 31/07/2026** — a real Pyodide run reproduced the CLI figures exactly with no console errors.
 
@@ -449,11 +482,11 @@ licence grants no rights in the name (Apache 2.0 §6), so please do not
 call a fork Redd Munro.
 
 **Why permissive.** The code is a couple of thousand lines of NumPy.
-What is actually hard to copy is in `REAL_DASHBOARDS.md` and the eight
+What is actually hard to copy is in `docs/REAL_DASHBOARDS.md` and the eight
 pre-registration documents beside it: predictions written down before
 each dataset was pulled, scored afterwards, misses included. A
 restrictive licence would guard the part that is cheap to reproduce
 while costing the trust that the rest depends on.
 
-Contributions require a sign-off — see `CONTRIBUTING.md`, which
+Contributions require a sign-off — see `docs/CONTRIBUTING.md`, which
 explains why in more detail than you probably want.

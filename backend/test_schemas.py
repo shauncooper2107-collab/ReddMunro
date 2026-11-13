@@ -24,8 +24,16 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import schemas as S
-import service as SVC
+try:
+    import schemas as S
+    import service as SVC
+    _IMPORT_ERROR = None
+except ImportError as exc:
+    # pydantic ships with the optional server extra. Importing it at
+    # module level used to kill `pytest` collection for the whole repo
+    # on a machine that only has the CLI dependency.
+    S = SVC = None
+    _IMPORT_ERROR = exc
 
 PASS, FAIL = [], []
 
@@ -55,6 +63,12 @@ def make_csv(path, n=420, d=9, k=3, seed=11):
 
 
 def main():
+    if _IMPORT_ERROR is not None:
+        print(f"schema tests not run: {_IMPORT_ERROR}")
+        print("  pip install 'redd-munro[server]'")
+        if os.environ.get("REDD_REQUIRE_EXTRAS") == "1":
+            return 1
+        return 0
     tmp = tempfile.mkdtemp(prefix="sa_schema_")
     print("=" * 70)
     print("SCHEMA CONFORMANCE — models vs what the service emits")
@@ -166,7 +180,31 @@ def main():
     for f in FAIL:
         print(f"  FAILED: {f}")
     print("=" * 70)
-    return 1 if FAIL else 0
+    if FAIL:
+        return 1
+    import importlib.util
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    spec = importlib.util.spec_from_file_location(
+        "suite_count", os.path.join(root, "ci", "suite_count.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    stale = mod.check_suite("schemas", len(PASS), 0)
+    if stale:
+        print(stale)
+        return 1
+    return 0
+
+
+def test_suite():
+    """So `pytest` at the repo root runs this file.
+
+    Missing pydantic is a skip, not a collection error. The server
+    extra is optional; the CLI does not need it.
+    """
+    if _IMPORT_ERROR is not None and os.environ.get("REDD_REQUIRE_EXTRAS") != "1":
+        import pytest
+        pytest.skip(f"server extra not installed: {_IMPORT_ERROR}")
+    assert main() == 0
 
 
 if __name__ == "__main__":

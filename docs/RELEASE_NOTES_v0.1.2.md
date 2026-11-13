@@ -112,5 +112,6 @@ Both unscored. So is `HISTORY_STORE_PREREG.md` **H1**, which is still the
 thing this project most needs and cannot get alone: a window somebody
 labelled `incident` because their service was genuinely broken.
 
-**496 checks.** Apache 2.0. numpy only. Nothing is uploaded, asserted at
-runtime.
+The suite size is [`TESTING.md`](TESTING.md). Apache 2.0. numpy only.
+Nothing is uploaded, asserted at runtime. The `backend/` prototype is
+not deployed and takes no money.

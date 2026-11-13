@@ -26,7 +26,10 @@ neither should be in use.
 worth being precise about what happens to it.
 
 - **Nothing is uploaded, ever.** There is no network code in any shipped
-  module. This is asserted twice in the test suite: statically, by
+  module. The website does download the Python runtime and numpy from
+  jsDelivr (about 10 MB) so the audit can run in the tab. That download
+  is the runtime, not the file you drop, and the page's
+  Content-Security-Policy does not allow a connection anywhere else. This is asserted twice in the test suite: statically, by
   scanning every shipped module for socket, urllib, requests, httpx and
   http.client; and at runtime, by replacing `socket.socket`,
   `create_connection` and `getaddrinfo` with a raiser and running five
