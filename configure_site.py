@@ -184,7 +184,7 @@ def main():
     rc = check()
     if rc == 0:
         print("\n  Next:  python build_demo.py")
-        print("         then deploy demo/ — see DEPLOY.md")
+        print("         then deploy demo/ — see docs/DEPLOY.md")
     return rc
 
 

@@ -55,7 +55,7 @@ redd = "signal_audit_cli:main"
 Homepage = "https://reddmunro.com"
 Source = "https://github.com/bigangusmac67-oss/ReddMunro"
 Documentation = "https://github.com/bigangusmac67-oss/ReddMunro#readme"
-Evidence = "https://github.com/bigangusmac67-oss/ReddMunro/blob/main/REAL_DASHBOARDS.md"
+Evidence = "https://github.com/bigangusmac67-oss/ReddMunro/blob/main/docs/REAL_DASHBOARDS.md"
 
 [tool.setuptools]
 # Flat modules rather than a package directory. This preserves

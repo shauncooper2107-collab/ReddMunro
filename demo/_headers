@@ -1,14 +1,30 @@
-# Cloudflare Pages / Netlify header rules.
+# Security and content-type rules for the static site.
 #
-# The Content-Type on signal_audit.py is the important line. Served as
-# anything executable-looking, some hosts treat a root-level .py as a
-# serverless function rather than a static asset — the single most
-# likely deploy failure for this page.
+# Workers static assets parse this file into the deploy metadata and
+# apply the rules to responses. They do not serve the file. If
+# https://reddmunro.com/_headers returns 200, the last upload did not
+# parse it (the file was stored as an ordinary asset). Redeploy with
+# Wrangler 4: `npx wrangler@4 deploy` from the repo root, after
+# `python build_demo.py`. Do not upload demo/ from the dashboard.
+# The diagnosis and the check commands are in docs/DEPLOY.md.
+#
+# Content-Security-Policy allows this origin plus the two CDNs the page
+# actually loads Pyodide from: cdn.jsdelivr.net, and unpkg.com as the
+# fallback. 'unsafe-inline' is the page's own script and style blocks.
+# 'unsafe-eval' and 'wasm-unsafe-eval' are what Pyodide 0.26 needs to
+# compile WebAssembly. blob: is the worker it starts. connect-src is
+# the same list, so a dropped CSV has nowhere to go.
+#
+# The same policy is in the <meta http-equiv> on index.html, minus
+# frame-ancestors, which a meta tag is not allowed to set. The header
+# is what applies it to every response, including signal_audit.py.
+
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   X-Frame-Options: DENY
   Permissions-Policy: geolocation=(), microphone=(), camera=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://unpkg.com; font-src 'self'; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'
 
 /signal_audit.py
   Content-Type: text/plain; charset=utf-8

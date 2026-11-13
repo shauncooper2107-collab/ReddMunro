@@ -74,7 +74,7 @@ npx wrangler pages project list
 
 | `reddmunro` in that list | Meaning | Do this |
 |---|---|---|
-| **absent** | it is already a Worker with static assets | `npx wrangler deploy` — the config here matches it |
+| **absent** | it is already a Worker with static assets | `npx wrangler@4 deploy` — the config here matches it |
 | **present** | it is a Pages project | see the warning below |
 
 > **If it is a Pages project, do not just run `wrangler deploy`.** That creates
@@ -89,13 +89,64 @@ npx wrangler pages project list
 
 ```bash
 python build_demo.py        # never skip: demo/ is build output
-npx wrangler deploy
+npx wrangler@4 deploy       # 4, not an older global `wrangler`
 ```
 
-`demo/_headers` is picked up natively by Workers static assets, exactly as it
-was by Pages — including the `Content-Type: text/plain` line on
-`signal_audit.py`, which is what stops a root-level `.py` being treated as a
-function instead of a file.
+`demo/_headers` is applied only when Wrangler **parses** it into the asset
+config. Wrangler 4 does. A dashboard upload of the folder, and Wrangler 3,
+store the file as an ordinary asset instead: visitors can download
+`/_headers`, and none of the rules are sent. That is the state of
+https://reddmunro.com as checked on 13 Nov 2026. See the next section.
+The rules include `Content-Type: text/plain` on `signal_audit.py` (so a
+root-level `.py` is a file, not a function) and a Content-Security-Policy
+whose `connect-src` is this origin plus `cdn.jsdelivr.net` and `unpkg.com`.
+
+### The live site is not applying the headers — do this by hand
+
+Checked 13 Nov 2026 against https://reddmunro.com. The responses are a
+Cloudflare Worker serving static assets: `server: cloudflare`,
+`cache-control: public, max-age=0, must-revalidate` (the Workers assets
+default), and a real 404. There is no `X-Frame-Options`, no
+`Referrer-Policy`, no `X-Content-Type-Options`, no
+`Content-Security-Policy`. `/signal_audit.py` comes back as
+`application/octet-stream`. `GET /_headers` returns **200** and the body
+of `demo/_headers`. A deploy that had parsed the file would not serve it.
+
+This repo cannot log into the Cloudflare account, so the redeploy is a
+step on the machine that holds the token. Do not upload `demo/` from the
+dashboard. From the repo root, after this change is the code you are
+deploying:
+
+```bash
+python build_demo.py
+npx wrangler@4.161.0 login     # once, if this machine is not authorised
+npx wrangler@4.161.0 whoami
+npx wrangler@4.161.0 deploy
+```
+
+Then all three of these, not just the first:
+
+```bash
+curl -sI https://reddmunro.com/ | tr -d '\r' \
+  | grep -iE 'content-security|x-frame|referrer-policy|x-content-type|permissions-policy'
+curl -sI https://reddmunro.com/_headers
+# must be 404. 200 means the file was uploaded as an asset again.
+curl -sI https://reddmunro.com/signal_audit.py
+# content-type: text/plain; charset=utf-8
+```
+
+Open the site, wait for the sample audit, and confirm a report appears.
+The policy allows the page's own inline script, Pyodide's `eval` and
+WebAssembly, and fetches to jsDelivr and unpkg. A tighter policy fails
+that audit in the tab. The same policy is also a `<meta>` tag on the
+page, so the HTML enforces it even before this redeploy; the meta tag
+cannot set `Content-Type` on `signal_audit.py` or `X-Frame-Options`.
+Those wait on the command above.
+
+CI uses `cloudflare/wrangler-action` pinned to Wrangler 4.161.0. It still
+needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` in the GitHub
+Actions secrets before a push to main deploys anything. The workflow has
+not run yet.
 
 ### Vercel
 

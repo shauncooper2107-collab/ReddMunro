@@ -254,7 +254,7 @@ def main():
                     ph.append(f)
     if ph:
         print(f"  [note] deployment placeholders still in: {', '.join(ph)}")
-        print(f"         fine for local use; see DEPLOY.md before going live")
+        print(f"         fine for local use; see docs/DEPLOY.md before going live")
 
     index = os.path.join(DEMO, "index.html")
     if not os.path.exists(index):

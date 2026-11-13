@@ -32,14 +32,21 @@
 <meta name="twitter:description" content="11 metrics on a live Prometheus instance carry 5.6 independent signals. Audit your own dashboard export in the browser — nothing is uploaded.">
 <meta name="twitter:image" content="https://reddmunro.com/og.png">
 <meta name="theme-color" content="#0b0f17">
+<!-- Same policy as demo/_headers, minus frame-ancestors, which a meta
+     tag is not allowed to set. It applies in the browser even when a
+     host uploads _headers as a plain file and never parses it. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net https://unpkg.com; font-src 'self'; worker-src 'self' blob:; child-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
 <!--
   ZERO-TRUST DEMO
   ===============
   The engine runs entirely in the browser via Pyodide. The CSV is read
   by the page, handed to Python as a STRING through audit_text(), and
-  never leaves the machine — there is no upload endpoint in this page
-  and no network call after the initial asset load. That is checkable:
-  open the network tab and drop a file.
+  never leaves the machine — there is no upload endpoint in this page.
+  The first visit does download the Python runtime and numpy (about
+  10 MB) from cdn.jsdelivr.net, with unpkg.com as the fallback. That is
+  what the network panel shows. After it is cached, dropping a file
+  makes no further request. The Content-Security-Policy allows those
+  two origins and this one, and nothing else.
 
   This is not a marketing claim about our servers. It is a property of
   the architecture: signal_audit.py depends on numpy and the standard
@@ -243,6 +250,9 @@ pre.conflict{background:var(--term);border:1px solid var(--line-2);
   .xform{grid-template-columns:1fr}
   .xf-arrow{transform:rotate(90deg);justify-self:center}
 }
+.results-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0 8px}
+.results-pair .xf-side{margin:0}
+@media(max-width:800px){ .results-pair{grid-template-columns:1fr} }
 
 /* a command you can copy, distinct from output you cannot */
 pre.cmd{background:var(--term);border:1px solid var(--line-2);border-radius:5px;
@@ -440,12 +450,74 @@ details.about code{font-family:var(--mono);font-size:12px;background:var(--term)
       the public repository, and it is the main thing
       <a href="#ask">we are looking for teams to help settle</a>.</p>
 
+    <p>Looking for <b>ten teams</b> to run this on a board they would be
+      paged for and email what came back, <b>including nothing</b>. About
+      ten minutes once a Prometheus export is in hand.</p>
+
     <div class="cta">
       <a href="#auditor">Audit a dashboard export</a>
-      <a href="#cohort" class="ghost">Or join the ten-team cohort</a>
+      <a class="ghost" href="mailto:shaun@reddmunro.com?subject=Redd%20Munro%20%E2%80%94%20ten%20teams&amp;body=Board%20size%20%28metrics%20x%20rows%29%3A%0A%0AWhat%20it%20flagged%20%28including%20nothing%29%3A%0A%0AWas%20it%20useful%3F%0A">Email what came back</a>
     </div>
-    <p class="faint" style="margin-top:18px">Runs in your browser. Your file is
-       read in this tab and never uploaded — open the network panel and check.</p>
+    <p class="faint" style="margin-top:18px">The first visit downloads the
+      Python runtime and numpy (about 10&nbsp;MB) from cdn.jsdelivr.net.
+      That is what the network panel shows. Your file is not part of that
+      download, and it is not sent anywhere.</p>
+  </section>
+
+  <section class="sec" id="cohort">
+    <h3>An open call for ten teams — not a trial you sign up for</h3>
+
+    <p class="lede">The results below were measured on public data. Nobody
+      has run this on a board they would be paged for.</p>
+
+    <p>There is nothing to buy here and no demo to book. The
+      <code>backend/</code> folder in the repository, with Starter, Pro
+      and Unlimited tiers, is an undeployed prototype. It takes no money.
+      The command-line tool and this page stay free under Apache-2.0, and
+      they run locally.</p>
+
+    <div class="grid">
+      <div class="feat"><div class="ic">01</div><b>Nothing leaves your machine</b>
+        <span>The audit on this page runs in your tab via WebAssembly.
+        The first load fetches the Python runtime and numpy from jsDelivr;
+        the file you drop is not in that download. The CLI is numpy and a
+        CSV. No agent, no account, no upload — and a test asserts the code
+        cannot open a socket.</span></div>
+
+      <div class="feat"><div class="ic">02</div><b>The predictions are already
+        written down</b>
+        <span>What we expect you to do, and where we expect you to give up,
+        is registered in <a href="https://github.com/bigangusmac67-oss/ReddMunro/blob/main/docs/ADOPTION_PREREG.md"><code>ADOPTION_PREREG.md</code></a> — unscored, and
+        committed before any of you ran it. Read it first, then check
+        whether we were right about you.</span></div>
+
+      <div class="feat"><div class="ic">03</div><b>Results get published,
+        nulls included</b>
+        <span>Including teams who report that it found nothing, and the
+        count of teams who never replied at all. A cohort that publishes
+        only its successes is an advert with a sample size.</span></div>
+    </div>
+
+    <p style="margin-top:20px"><b>What it costs you.</b> The example board
+      takes about two minutes. Your own board takes longer, and the
+      slow part is not the audit — it is getting an export into one column
+      per metric and one row per timestamp, which is not one click in
+      Grafana. <b>We predict that is where most of you will stop</b>, and
+      it is better said here than discovered in a reply.</p>
+
+    <p><b>What you get.</b> Your numbers, the worksheet, and the tool —
+      Apache 2.0, yours to keep and to fork. <b>What we get</b> is the
+      first evidence that any of this survives contact with a board
+      somebody is paged for. That is the entire trade; it is deliberately
+      not a discount on something later.</p>
+
+    <p class="faint">No NDA needed to send a finding, happy to sign one if
+      you would rather. Your team is not named in the write-up unless you
+      ask to be.</p>
+
+    <p style="margin-top:20px"><a class="cta"
+      href="mailto:shaun@reddmunro.com?subject=Redd%20Munro%20%E2%80%94%20ten%20teams&amp;body=Board%20size%20%28metrics%20x%20rows%29%3A%0A%0AWhat%20it%20flagged%20%28including%20nothing%29%3A%0A%0AWas%20it%20useful%3F%0A">
+      Email what came back &rarr;</a></p>
   </section>
 
   <!-- THE TRANSFORMATION BLOCK.
@@ -458,44 +530,44 @@ details.about code{font-family:var(--mono);font-size:12px;background:var(--term)
        here would cost more than the drama buys. -->
   <section class="sec" id="transformation">
     <h3>What comes back</h3>
-    <p class="lede">A real result on the corpus that ships with the tool: a
-      live Prometheus instance, eleven metrics, 437 samples. Small enough to
-      check by hand, which is the point of using it as the example.</p>
+    <p class="lede">Two measured boards. The larger one first. The smaller
+      one ships with the tool, and is small enough to check by hand.</p>
 
-    <div class="xform">
-      <div class="xf-side">
-        <h4>The board</h4>
-        <div class="xf-row"><b>11</b><span>panels</span></div>
-        <div class="xf-row"><b>437</b><span>samples of history</span></div>
-        <p class="faint">Presented as eleven independent views of the
-          system.</p>
-      </div>
-
-      <div class="xf-arrow" aria-hidden="true">&rarr;</div>
-
+    <div class="results-pair">
       <div class="xf-side out">
-        <h4>The audit</h4>
+        <h4>NYC COVID daily counts</h4>
+        <div class="xf-row"><b>53</b><span>metrics, 455 days</span></div>
+        <div class="xf-row"><b>5.1</b><span>independent signals</span></div>
+        <div class="xf-row"><b>1.6</b><span>if you only read the raw view
+          — every series rode the same wave</span></div>
+        <p class="faint">A public operational board, not a fixture.
+          NYC Open Data.</p>
+      </div>
+      <div class="xf-side out">
+        <h4>Prometheus infrastructure</h4>
+        <div class="xf-row"><b>11</b><span>metrics, 437 samples</span></div>
         <div class="xf-row"><b>5.6</b><span>independent signals</span></div>
         <div class="xf-row"><b>49.3%</b><span>restates something already
           on the board</span></div>
-        <div class="xf-row"><b>2</b><span>archive candidates</span></div>
         <div class="xf-row alarm"><b>2</b><span>CONFLICTS — one behind a
           paging alert</span></div>
-        <div class="xf-row"><b>A</b><span>evidence grade — enough history
-          to act on</span></div>
+        <p class="faint">Evidence grade A. Half of a production instance
+          was restating the other half.</p>
       </div>
     </div>
 
-    <pre class="cmd"><span class="c"># the audit figures</span>
-redd run   prometheus_infra.csv --basis differenced --ordered
+    <p>A principal-component count would stop at "about five signals." It
+      would not name the columns that are the same measurement twice, the
+      pair that is dependent even though correlation is near zero, or the
+      archive candidate that still sits behind a paging alert.</p>
+
+    <pre class="cmd"><span class="c"># NYC, then the Prometheus corpus that ships with the tool</span>
+redd run data/nyc_covid_dashboard.csv --basis differenced --ordered
+redd run data/prometheus_infra.csv    --basis differenced --ordered
 
 <span class="c"># the archive candidates, and the conflicts against your rules</span>
 redd prune prometheus_infra.csv --basis differenced --ordered \
      --refs ./monitoring --worksheet ws.csv</pre>
-    <p class="faint">Eleven panels is a small board. The ratio is what
-      travels: half of a production Prometheus instance was restating the
-      other half, on a set small enough that its owners could reasonably
-      believe they knew it.</p>
   </section>
 
   <!-- The CONFLICT flag, promoted out of the CLI section. It was the
@@ -532,80 +604,14 @@ redd prune prometheus_infra.csv --basis differenced --ordered \
       delete button. The arithmetic is the easy half.</p>
   </section>
 
-  <!-- THE COHORT.
-       Placed after the CONFLICT rather than before it, deliberately.
-       An invitation is only worth reading once the reader believes the
-       thing works; asking first and demonstrating second is how a
-       research framing turns into "this is a science project, not a
-       tool". So: problem, measured result, the finding, THEN the ask.
-
-       Three phrases were proposed for this section and are not used.
-       "Controlled trial" — there is no control group, no
-       randomisation and no allocation, and ADOPTION_PREREG.md says so
-       two clicks away. "Benchmark" — a benchmark needs pooled results,
-       and zero telemetry means we only ever see what someone chooses
-       to email. "2-minute audit" — true of the example board, not of
-       theirs, and prediction A1 says the export is where they will
-       actually stop. -->
-  <section class="sec" id="cohort">
-    <h3>An open call for ten teams — not a trial you sign up for</h3>
-
-    <p class="lede">Everything above was measured on public data. Nobody
-      has run this on a board they would be paged for.</p>
-
-    <p>So there is nothing to buy here and no demo to book. There is an
-      open call for <b>ten teams</b> to run the same audit on their own
-      dashboards and say what came back — <b>including nothing</b>.</p>
-
-    <div class="grid">
-      <div class="feat"><div class="ic">01</div><b>Nothing leaves your machine</b>
-        <span>The audit on this page runs in your tab via WebAssembly. The
-        CLI is numpy and a CSV file. No agent, no account, no upload — and
-        a test asserts the code cannot open a socket. Check the network
-        panel rather than this sentence.</span></div>
-
-      <div class="feat"><div class="ic">02</div><b>The predictions are already
-        written down</b>
-        <span>What we expect you to do, and where we expect you to give up,
-        is registered in <a href="https://github.com/bigangusmac67-oss/ReddMunro/blob/main/ADOPTION_PREREG.md"><code>ADOPTION_PREREG.md</code></a> — unscored, and
-        committed before any of you ran it. Read it first, then check
-        whether we were right about you.</span></div>
-
-      <div class="feat"><div class="ic">03</div><b>Results get published,
-        nulls included</b>
-        <span>Including teams who report that it found nothing, and the
-        count of teams who never replied at all. A cohort that publishes
-        only its successes is an advert with a sample size.</span></div>
-    </div>
-
-    <p style="margin-top:20px"><b>What it costs you.</b> The example board
-      below takes about two minutes. Your own board takes longer, and the
-      slow part is not the audit — it is getting an export into one column
-      per metric and one row per timestamp, which is not one click in
-      Grafana. <b>We predict that is where most of you will stop</b>, and
-      it is better said here than discovered in a reply.</p>
-
-    <p><b>What you get.</b> Your numbers, the worksheet, and the tool —
-      Apache 2.0, yours to keep and to fork. <b>What we get</b> is the
-      first evidence that any of this survives contact with a board
-      somebody is paged for. That is the entire trade; it is deliberately
-      not a discount on something later.</p>
-
-    <p class="faint">No NDA needed to send a finding, happy to sign one if
-      you would rather. Your team is not named in the write-up unless you
-      ask to be.</p>
-
-    <p style="margin-top:20px"><a class="cta"
-      href="mailto:shaun@reddmunro.com?subject=Redd%20Munro%20—%20cohort">
-      Join the ten &rarr;</a></p>
-  </section>
 </div>
 
 
 <div class="wrap" id="auditor">
   <section class="sec"><h3>Run an audit</h3>
     <p class="lede">Export any dashboard to CSV. Columns are metrics, rows are
-      timestamps. Nothing is uploaded.</p></section>
+      timestamps. The runtime came from a CDN. The file does not go back
+      out.</p></section>
 
   <div class="card">
     <h2>How to use this</h2>
@@ -624,7 +630,7 @@ redd prune prometheus_infra.csv --basis differenced --ordered \
 
   <div id="drop" class="card">
     <div id="dropmsg"><strong>Drop a CSV here</strong><br>
-      <span class="sub">or click to choose · nothing leaves this machine</span></div>
+      <span class="sub">or click to choose · the file stays in this tab</span></div>
     <input type="file" id="file" accept=".csv,text/csv" hidden>
   </div>
 
@@ -993,9 +999,10 @@ redd prune prometheus_infra.csv --basis differenced --ordered \
       trying to break its own measurements, and catalogued the distinct ways a
       comparison like this can produce a publishable-looking wrong answer.</p>
 
-      <p class="faint">Runs entirely in your browser via Pyodide. No account, no
-      upload, no telemetry — which would be an awkward thing for this particular
-      tool to collect.</p>
+      <p class="faint">Runs entirely in your browser via Pyodide. The first
+      load fetches the Python runtime and numpy from jsDelivr, about 10&nbsp;MB.
+      Your file stays in the tab. No account, no upload, no telemetry —
+      which would be an awkward thing for this particular tool to collect.</p>
     </div>
   </details>
 
@@ -1043,7 +1050,7 @@ redd prune prometheus_infra.csv --basis differenced --ordered \
       <div>Every check we run — and the one we have not built — is on this page</div>
     </div>
     <div class="row" style="margin-top:14px">
-      <div>Ran it on a real dashboard? <a href="mailto:shaun@reddmunro.com?subject=Redd%20Munro%20—%20what%20it%20found">Tell me what it found</a> — including if it was useless.</div>
+      <div>Ran it on a real dashboard? <a href="mailto:shaun@reddmunro.com?subject=Redd%20Munro%20%E2%80%94%20ten%20teams&amp;body=Board%20size%20%28metrics%20x%20rows%29%3A%0A%0AWhat%20it%20flagged%20%28including%20nothing%29%3A%0A%0AWas%20it%20useful%3F%0A">Tell me what it found</a> — including if it was useless.</div>
       <div>No accounts, no tracking, no cookies.</div>
     </div>
   </footer>
@@ -1166,7 +1173,7 @@ import json, signal_audit as SA
     autoRun();
     drop.classList.remove('busy');
     msg.innerHTML = '<strong>Drop a CSV here</strong><br>' +
-      '<span class="sub">or click to choose · nothing leaves this machine</span>';
+      '<span class="sub">or click to choose · the file stays in this tab</span>';
   } catch (e) {
     drop.classList.remove('busy');
     const blocked = /Pyodide could not be loaded/.test(e.message)

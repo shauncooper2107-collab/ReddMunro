@@ -881,6 +881,27 @@ def main():
             third = {h for h in hosts if "jsdelivr" in h or "unpkg" in h}
             check("both third-party hosts survive substitution",
                   len(third) == 2, str(sorted(third)))
+            csp = _re.search(
+                r'http-equiv="Content-Security-Policy"\s+content="([^"]*)"',
+                page)
+            check("the page's CSP allows only this origin and the Pyodide CDNs",
+                  csp is not None
+                  and "default-src 'self'" in csp.group(1)
+                  and "https://cdn.jsdelivr.net" in csp.group(1)
+                  and "https://unpkg.com" in csp.group(1)
+                  and "http:" not in csp.group(1)
+                  and "*" not in csp.group(1),
+                  "a dropped CSV has to have nowhere to connect")
+            hdr_path = os.path.join(os.path.dirname(demo_index), "_headers")
+            hdr = open(hdr_path, encoding="utf-8").read() if os.path.exists(hdr_path) else ""
+            check("_headers sets the CSP, the frame denial, and text/plain on the engine",
+                  "Content-Security-Policy:" in hdr
+                  and "https://cdn.jsdelivr.net" in hdr
+                  and "https://unpkg.com" in hdr
+                  and "X-Frame-Options: DENY" in hdr
+                  and "X-Content-Type-Options: nosniff" in hdr
+                  and "Content-Type: text/plain" in hdr,
+                  "Workers apply this file only when Wrangler parses it")
 
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
@@ -2038,6 +2059,20 @@ latency_bucket{le="+Inf"} 300
     rd29 = open(os.path.join(root29, "README.md"), encoding="utf-8").read()
     site29 = open(os.path.join(root29, "demo", "index.html"),
                   encoding="utf-8").read()
+    # 284, 392 and 496 were three documents describing one suite. The
+    # number now lives in docs/TESTING.md. These files may name that
+    # path and must not keep a private total.
+    stale_docs = []
+    for rel in ("README.md", "docs/PRELAUNCH_CHECKLIST.md",
+                "docs/RELEASE_NOTES_v0.1.2.md"):
+        body = open(os.path.join(root29, rel), encoding="utf-8").read()
+        if "docs/TESTING.md" not in body and "TESTING.md" not in body:
+            stale_docs.append(rel + " does not point at TESTING.md")
+        for old in ("284 checks", "392 tests", "**496 checks.**"):
+            if old in body:
+                stale_docs.append(f"{rel} still says {old!r}")
+    check("current docs share one test count, in docs/TESTING.md",
+          not stale_docs, "; ".join(stale_docs))
 
     # README: "— <n> of them" against the bullets under Engine boundaries
     m = re.search(r"engine\s*\n?boundaries\]\(#engine-boundaries\) below — "
@@ -2065,10 +2100,11 @@ latency_bucket{le="+Inf"} 300
           f"is a summary, so it may be shorter but never longer")
 
     # Pre-registration documents: total, and how many carry a score
-    pregs = sorted(f for f in os.listdir(root29) if f.endswith("PREREG.md"))
+    docs29 = os.path.join(root29, "docs")
+    pregs = sorted(f for f in os.listdir(docs29) if f.endswith("PREREG.md"))
     scored = [f for f in pregs
               if re.search(r"^## Result — ",
-                           open(os.path.join(root29, f), encoding="utf-8").read(),
+                           open(os.path.join(docs29, f), encoding="utf-8").read(),
                            re.M)]
     m3 = re.search(r"the (\w+)\s*\n?\s*pre-registration documents", site29)
     check("site's pre-registration count matches the files on disk",
@@ -2090,28 +2126,24 @@ latency_bucket{le="+Inf"} 300
     # reader trusts, and therefore the most expensive place for a stale
     # figure. The previous one sat eleven cycles out of date describing
     # the project as pre-publication.
-    hd = os.path.join(root29, "HANDOFF.md")
+    hd = os.path.join(docs29, "HANDOFF.md")
     if os.path.exists(hd):
         h29 = open(hd, encoding="utf-8").read()
-        m6 = re.search(r"\*\*(\d+)\*\* — engine (\d+), backend (\d+), "
-                       r"schemas (\d+), scale (\d+)", h29)
-        check("HANDOFF's test totals add up",
-              m6 is not None and sum(int(m6.group(i)) for i in (2, 3, 4, 5))
-              == int(m6.group(1)),
-              f"{m6.group(1)} claimed, {sum(int(m6.group(i)) for i in (2,3,4,5))} "
-              f"summed" if m6 else "totals line not found")
-        # Deliberately NOT asserting the exact engine-test count. It
-        # cannot be counted mid-run, and pinning it would fail on every
-        # commit that adds a test — friction that gets a check deleted
-        # rather than a document updated. The internal sum above is the
-        # part that catches a typo; §10 of HANDOFF carries the command
-        # to re-derive the figure, which is the durable answer.
+        # The count itself is not copied into HANDOFF. It lives in
+        # docs/TESTING.md, and the end of this run checks that file
+        # against len(PASS). A second copy here is how 284, 392 and
+        # 496 ended up in different documents.
+        check("HANDOFF points at the single test-count file",
+              "TESTING.md" in h29 and "496" not in h29
+              and "392" not in h29,
+              "the count is docs/TESTING.md")
         m8 = re.search(r"(\w+) entries", h29)
         check("HANDOFF's boundary count matches the README",
               m8 is not None and WORD.get(m8.group(1).lower()) == bullets,
               f"says {m8.group(1) if m8 else '?'}, README has {bullets}")
-        m7 = re.search(r"ls \*_PREREG\.md\s+# (\d+): (\d+) scored, (\d+) open",
-                       h29)
+        m7 = re.search(
+            r"ls docs/\*_PREREG\.md\s+# (\d+): (\d+) scored, (\d+) open",
+            h29)
         check("HANDOFF's pre-registration split matches the files",
               m7 is not None and int(m7.group(1)) == len(pregs)
               and int(m7.group(2)) == len(scored),
@@ -2443,7 +2475,26 @@ latency_bucket{le="+Inf"} 300
             print(f"  SKIPPED: {s}")
         print("  Set REDD_REQUIRE_EXTRAS=1 to make a skip a failure.")
     print("=" * 70)
-    return 1 if FAIL else 0
+    if FAIL:
+        return 1
+    # After every check, including the ones above. docs/TESTING.md is
+    # the only written copy of this number; this is what keeps it true.
+    import importlib.util
+    _sc_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "ci", "suite_count.py")
+    _spec = importlib.util.spec_from_file_location("suite_count", _sc_path)
+    _sc = importlib.util.module_from_spec(_spec)
+    _spec.loader.exec_module(_sc)
+    stale = _sc.check_suite("engine", len(PASS), len(SKIPPED))
+    if stale:
+        print(stale)
+        return 1
+    return 0
+
+
+def test_suite():
+    """So `pytest` at the repo root runs this file."""
+    assert main() == 0
 
 
 if __name__ == "__main__":

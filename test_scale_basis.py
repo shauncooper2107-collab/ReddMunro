@@ -9,6 +9,8 @@ and textbook, but does it move the numbers THIS engine thresholds on? If
 it does not, plain ratios ship. If it does, a centred-log-ratio transform
 becomes mandatory.
 """
+import os
+
 import numpy as np
 import signal_audit as SA
 
@@ -180,7 +182,24 @@ def main():
     for f in FAIL:
         print(f"  FAILED: {f}")
     print("=" * 72)
-    return 1 if FAIL else 0
+    if FAIL:
+        return 1
+    import importlib.util
+    root = os.path.dirname(os.path.abspath(__file__))
+    spec = importlib.util.spec_from_file_location(
+        "suite_count", os.path.join(root, "ci", "suite_count.py"))
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    stale = mod.check_suite("scale", len(PASS), 0)
+    if stale:
+        print(stale)
+        return 1
+    return 0
+
+
+def test_suite():
+    """So `pytest` at the repo root runs this file."""
+    assert main() == 0
 
 
 if __name__ == "__main__":

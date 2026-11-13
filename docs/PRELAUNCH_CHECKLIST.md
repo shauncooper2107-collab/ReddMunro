@@ -2,7 +2,7 @@
 
 One page. **Phase 1 is complete.** Every item below has been executed and verified, including the browser smoke test.
 
-**Status: 392 tests green.** Engine 284 · Backend 108. Plus four scoring scripts that are run and recorded rather than asserted: `score_drift.py`, `score_history.py`, `score_binning.py`, and the wasm32 CI job.
+**Status: the suites in [`TESTING.md`](TESTING.md) are the count.** Plus four scoring scripts that are run and recorded rather than asserted: `score_drift.py`, `score_history.py`, `score_binning.py`, and the wasm32 CI job.
 
 ---
 
@@ -134,9 +134,9 @@ Guard verified by deliberately corrupting the copy and confirming it caught it.
 
 ## 4 · Ship / don't-ship
 
-**Shipping — Starter tier, complete:** local CLI (`run`, `prune`, `history`, `--html`, `--json`, `--worksheet`, `--refs`, `--cardinality`, `--shadow`, `--route`, `--record`), browser sandbox, self-contained HTML reports, 284-check engine suite, failure catalogue in `REAL_DASHBOARDS.md`.
+**Shipping — the local tool, complete:** local CLI (`run`, `prune`, `history`, `--html`, `--json`, `--worksheet`, `--refs`, `--cardinality`, `--shadow`, `--route`, `--record`), browser sandbox, self-contained HTML reports, the engine suite in [`TESTING.md`](TESTING.md), failure catalogue in `REAL_DASHBOARDS.md`. The CLI and the browser tool stay free under Apache-2.0.
 
-**Not shipping — Pro/Enterprise, deferred by design:** the backend is functionally complete but **must not take money yet** — auth is a stub, there is no persistence, and `InMemoryJobStore` breaks behind more than one worker. All three raise or warn rather than failing quietly.
+**Not shipping — the hosted API, an undeployed prototype:** `backend/` sketches Starter, Pro and Unlimited tiers. It is not deployed and it takes no money — auth is a stub, there is no persistence, and `InMemoryJobStore` breaks behind more than one worker. All three raise or warn rather than failing quietly. See `backend/README.md`. The CLI and the in-browser tool stay free under Apache-2.0.
 
 **Say this accurately in the deck:**
 
